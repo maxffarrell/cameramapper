@@ -6,7 +6,8 @@ export interface CameraModel {
 	range: number; // feet
 	price: number;
 	features: string[];
-	emoji: string;
+	type: 'dome' | 'bullet' | 'ptz' | 'fisheye';
+	emoji: string; // Keep for backward compatibility, but use icons instead
 }
 
 export interface Camera {
@@ -62,7 +63,7 @@ export interface Project {
 	updatedAt: Date;
 }
 
-export type Tool = 'select' | 'pan' | 'scale';
+export type Tool = 'select' | 'pan' | 'scale' | 'draw-scale';
 
 export type Theme = 'light' | 'dark';
 

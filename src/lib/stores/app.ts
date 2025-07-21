@@ -37,6 +37,7 @@ export const cameraModels = writable<CameraModel[]>([
 		range: 100,
 		price: 299,
 		features: ['Night Vision', 'Color at Night', 'Audio'],
+		type: 'dome',
 		emoji: '📹'
 	},
 	{
@@ -47,6 +48,7 @@ export const cameraModels = writable<CameraModel[]>([
 		range: 150,
 		price: 379,
 		features: ['Night Vision', 'Varifocal', 'Audio'],
+		type: 'bullet',
 		emoji: '🎥'
 	},
 	{
@@ -57,6 +59,7 @@ export const cameraModels = writable<CameraModel[]>([
 		range: 120,
 		price: 245,
 		features: ['Night Vision', 'Smart Detection'],
+		type: 'bullet',
 		emoji: '📷'
 	},
 	{
@@ -67,7 +70,30 @@ export const cameraModels = writable<CameraModel[]>([
 		range: 100,
 		price: 895,
 		features: ['Varifocal', 'Night Vision', 'Analytics'],
+		type: 'dome',
 		emoji: '🔍'
+	},
+	{
+		id: 'hikvision-ptz-ds2de4a425iw',
+		name: 'DS-2DE4A425IW-DE',
+		brand: 'Hikvision',
+		fovAngle: 360,
+		range: 200,
+		price: 1299,
+		features: ['PTZ', 'Night Vision', 'Auto Tracking', 'Audio'],
+		type: 'ptz',
+		emoji: '🎯'
+	},
+	{
+		id: 'axis-m3067-p',
+		name: 'AXIS M3067-P',
+		brand: 'Axis',
+		fovAngle: 180,
+		range: 80,
+		price: 649,
+		features: ['Fisheye', 'Night Vision', 'Dewarping'],
+		type: 'fisheye',
+		emoji: '👁️'
 	}
 ]);
 
@@ -85,19 +111,30 @@ export function setActiveTool(tool: Tool) {
 
 export function setTheme(theme: Theme) {
 	appState.update(state => ({ ...state, theme }));
-	if (typeof localStorage !== 'undefined') {
-		localStorage.setItem('cameramapper-theme', theme);
-	}
 }
 
-export function loadThemeFromStorage(): Theme {
-	if (typeof localStorage !== 'undefined') {
-		const stored = localStorage.getItem('cameramapper-theme');
-		if (stored === 'dark' || stored === 'light') {
-			return stored as Theme;
-		}
+export function getSystemTheme(): Theme {
+	if (typeof window !== 'undefined' && window.matchMedia) {
+		return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 	}
 	return 'light';
+}
+
+export function initTheme(): Theme {
+	const systemTheme = getSystemTheme();
+	setTheme(systemTheme);
+	
+	// Listen for system theme changes
+	if (typeof window !== 'undefined' && window.matchMedia) {
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+		mediaQuery.addEventListener('change', (e) => {
+			const newTheme = e.matches ? 'dark' : 'light';
+			setTheme(newTheme);
+			document.documentElement.classList.toggle('dark', newTheme === 'dark');
+		});
+	}
+	
+	return systemTheme;
 }
 
 export function selectCamera(id: string | undefined) {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera } from '$lib/stores/app.js';
+	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateTransform } from '$lib/stores/app.js';
 	import { loadPdf, renderPdfPage, drawPdfOnCanvas, type PdfPage } from '$lib/utils/pdf.js';
 	import type { Camera, InfrastructureComponent } from '$lib/types.js';
 
@@ -11,6 +11,15 @@
 	let pdfPage: PdfPage | null = null;
 	let isDragging = false;
 	let dragStart = { x: 0, y: 0 };
+	let scaleDrawing = $state(false);
+	let scaleLine = $state<{ x1: number; y1: number; x2: number; y2: number; pixelLength: number } | null>(null);
+	let tempScaleLine = $state<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
+
+	let { onScaleLineDrawn, onEditCamera, onEditInfrastructure } = $props<{
+		onScaleLineDrawn?: (line: { x1: number; y1: number; x2: number; y2: number; pixelLength: number }) => void;
+		onEditCamera?: (camera: Camera) => void;
+		onEditInfrastructure?: (component: InfrastructureComponent) => void;
+	}>();
 
 	onMount(() => {
 		if (canvas) {
@@ -62,6 +71,38 @@
 		project.infrastructure.forEach(component => {
 			drawInfrastructure(ctx, component);
 		});
+
+		// Draw temporary scale line
+		if (tempScaleLine) {
+			ctx.strokeStyle = '#ef4444';
+			ctx.lineWidth = 3;
+			ctx.setLineDash([5, 5]);
+			ctx.beginPath();
+			ctx.moveTo(tempScaleLine.x1, tempScaleLine.y1);
+			ctx.lineTo(tempScaleLine.x2, tempScaleLine.y2);
+			ctx.stroke();
+			ctx.setLineDash([]);
+		}
+
+		// Draw existing scale reference line
+		const scaleRef = project.scale.referenceLine;
+		if (scaleRef) {
+			ctx.strokeStyle = '#10b981';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(scaleRef.x1, scaleRef.y1);
+			ctx.lineTo(scaleRef.x2, scaleRef.y2);
+			ctx.stroke();
+			
+			// Draw endpoints
+			ctx.fillStyle = '#10b981';
+			ctx.beginPath();
+			ctx.arc(scaleRef.x1, scaleRef.y1, 4, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.arc(scaleRef.x2, scaleRef.y2, 4, 0, 2 * Math.PI);
+			ctx.fill();
+		}
 
 		ctx.restore();
 	}
@@ -217,18 +258,34 @@
 	}
 
 	function handleMouseDown(event: MouseEvent) {
+		const rect = canvas.getBoundingClientRect();
+		const project = $appState.currentProject;
+		if (!project) return;
+
+		const { transform } = project;
+		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
+		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+
 		if ($appState.activeTool === 'pan') {
 			isDragging = true;
 			dragStart = { x: event.clientX, y: event.clientY };
 			canvas.style.cursor = 'grabbing';
+		} else if ($appState.activeTool === 'scale') {
+			scaleDrawing = true;
+			tempScaleLine = { x1: x, y1: y, x2: x, y2: y };
 		}
 	}
 
 	function handleMouseMove(event: MouseEvent) {
-		if (isDragging && $appState.activeTool === 'pan') {
-			const project = $appState.currentProject;
-			if (!project) return;
+		const rect = canvas.getBoundingClientRect();
+		const project = $appState.currentProject;
+		if (!project) return;
 
+		const { transform } = project;
+		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
+		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+
+		if (isDragging && $appState.activeTool === 'pan') {
 			const deltaX = event.clientX - dragStart.x;
 			const deltaY = event.clientY - dragStart.y;
 			
@@ -237,12 +294,103 @@
 			
 			dragStart = { x: event.clientX, y: event.clientY };
 			draw();
+		} else if (scaleDrawing && tempScaleLine) {
+			tempScaleLine.x2 = x;
+			tempScaleLine.y2 = y;
+			draw();
 		}
 	}
 
 	function handleMouseUp() {
+		if (scaleDrawing && tempScaleLine) {
+			const dx = tempScaleLine.x2 - tempScaleLine.x1;
+			const dy = tempScaleLine.y2 - tempScaleLine.y1;
+			const pixelLength = Math.sqrt(dx * dx + dy * dy);
+			
+			if (pixelLength > 10) { // Minimum line length
+				const line = {
+					x1: tempScaleLine.x1,
+					y1: tempScaleLine.y1,
+					x2: tempScaleLine.x2,
+					y2: tempScaleLine.y2,
+					pixelLength
+				};
+				
+				if (onScaleLineDrawn) {
+					onScaleLineDrawn(line);
+				}
+			}
+			
+			scaleDrawing = false;
+			tempScaleLine = null;
+		}
+		
 		isDragging = false;
-		canvas.style.cursor = $appState.activeTool === 'pan' ? 'grab' : 'default';
+		canvas.style.cursor = $appState.activeTool === 'pan' ? 'grab' : 
+							  $appState.activeTool === 'scale' ? 'crosshair' : 'default';
+	}
+
+	function handleDoubleClick(event: MouseEvent) {
+		if ($appState.activeTool !== 'select') return;
+
+		const rect = canvas.getBoundingClientRect();
+		const project = $appState.currentProject;
+		if (!project) return;
+
+		const { transform } = project;
+		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
+		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+
+		// Check for camera double-clicks
+		for (const camera of project.cameras) {
+			const distance = Math.sqrt((camera.x - x) ** 2 + (camera.y - y) ** 2);
+			if (distance < 20) {
+				if (onEditCamera) {
+					onEditCamera(camera);
+				}
+				return;
+			}
+		}
+
+		// Check for infrastructure double-clicks
+		for (const component of project.infrastructure) {
+			const distance = Math.sqrt((component.x - x) ** 2 + (component.y - y) ** 2);
+			if (distance < 20) {
+				if (onEditInfrastructure) {
+					onEditInfrastructure(component);
+				}
+				return;
+			}
+		}
+	}
+
+	function handleWheel(event: WheelEvent) {
+		event.preventDefault();
+		
+		const project = $appState.currentProject;
+		if (!project) return;
+
+		const rect = canvas.getBoundingClientRect();
+		const mouseX = event.clientX - rect.left;
+		const mouseY = event.clientY - rect.top;
+
+		// Convert mouse position to canvas coordinates
+		const canvasX = (mouseX - project.transform.panX * project.transform.zoom) / project.transform.zoom;
+		const canvasY = (mouseY - project.transform.panY * project.transform.zoom) / project.transform.zoom;
+
+		// Calculate zoom change
+		const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+		const newZoom = Math.max(0.1, Math.min(5, project.transform.zoom * zoomFactor));
+
+		// Adjust pan to keep mouse position fixed
+		const newPanX = mouseX / newZoom - canvasX;
+		const newPanY = mouseY / newZoom - canvasY;
+
+		updateTransform({
+			zoom: newZoom,
+			panX: newPanX,
+			panY: newPanY
+		});
 	}
 
 	function handleDragOver(event: DragEvent) {
@@ -250,15 +398,23 @@
 	}
 
 	// Reactive updates
-	$: if (canvas) {
-		draw();
-	}
+	$effect(() => {
+		if (canvas) {
+			draw();
+		}
+	});
 
-	$: if (canvas && $appState.activeTool === 'pan') {
-		canvas.style.cursor = 'grab';
-	} else if (canvas) {
-		canvas.style.cursor = 'default';
-	}
+	$effect(() => {
+		if (canvas) {
+			if ($appState.activeTool === 'pan') {
+				canvas.style.cursor = 'grab';
+			} else if ($appState.activeTool === 'scale') {
+				canvas.style.cursor = 'crosshair';
+			} else {
+				canvas.style.cursor = 'default';
+			}
+		}
+	});
 
 	export { handlePdfUpload };
 </script>
@@ -267,12 +423,14 @@
 	<canvas 
 		bind:this={canvas}
 		class="absolute inset-0 w-full h-full"
-		on:click={handleCanvasClick}
-		on:mousedown={handleMouseDown}
-		on:mousemove={handleMouseMove}
-		on:mouseup={handleMouseUp}
-		on:drop={handleDrop}
-		on:dragover={handleDragOver}
+		onclick={handleCanvasClick}
+		ondblclick={handleDoubleClick}
+		onmousedown={handleMouseDown}
+		onmousemove={handleMouseMove}
+		onmouseup={handleMouseUp}
+		onwheel={handleWheel}
+		ondrop={handleDrop}
+		ondragover={handleDragOver}
 	></canvas>
 	
 	<svg 

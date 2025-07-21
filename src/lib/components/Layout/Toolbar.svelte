@@ -21,7 +21,7 @@
 			<button
 				onclick={() => selectTool('select')}
 				class="p-2 rounded-md transition-colors {$appState.activeTool === 'select' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}"
-				title="Select Tool"
+				title="Select items (click to select, double-click to edit)"
 			>
 				<MousePointer size={18} />
 			</button>
@@ -29,7 +29,7 @@
 			<button
 				onclick={() => selectTool('pan')}
 				class="p-2 rounded-md transition-colors {$appState.activeTool === 'pan' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}"
-				title="Pan Tool"
+				title="Pan around the floor plan (or use mouse wheel to zoom)"
 			>
 				<Hand size={18} />
 			</button>
@@ -37,7 +37,7 @@
 			<button
 				onclick={() => selectTool('scale')}
 				class="p-2 rounded-md transition-colors {$appState.activeTool === 'scale' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}"
-				title="Scale Tool"
+				title="Draw a line to set scale measurements"
 			>
 				<Ruler size={18} />
 			</button>
