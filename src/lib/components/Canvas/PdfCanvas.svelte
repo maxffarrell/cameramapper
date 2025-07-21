@@ -377,35 +377,46 @@
 		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
 		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
 
-		if ($appState.activeTool === 'select') {
-			// Check if clicking on an existing camera for dragging
-			for (const camera of project.cameras) {
-				const distance = Math.sqrt((camera.x - x) ** 2 + (camera.y - y) ** 2);
-				if (distance < 20) {
-					draggingItem = { type: 'camera', id: camera.id, startX: camera.x, startY: camera.y };
-					selectCamera(camera.id);
-					canvas.style.cursor = 'grabbing';
-					return;
-				}
-			}
-
-			// Check if clicking on an existing infrastructure for dragging
-			for (const component of project.infrastructure) {
-				const distance = Math.sqrt((component.x - x) ** 2 + (component.y - y) ** 2);
-				if (distance < 20) {
-					draggingItem = { type: 'infrastructure', id: component.id, startX: component.x, startY: component.y };
-					selectInfrastructure(component.id);
-					canvas.style.cursor = 'grabbing';
-					return;
-				}
-			}
-		} else if ($appState.activeTool === 'pan') {
+		// Right click for panning (regardless of active tool)
+		if (event.button === 2) {
 			isDragging = true;
 			dragStart = { x: event.clientX, y: event.clientY };
 			canvas.style.cursor = 'grabbing';
-		} else if ($appState.activeTool === 'scale') {
-			scaleDrawing = true;
-			tempScaleLine = { x1: x, y1: y, x2: x, y2: y };
+			return;
+		}
+
+		// Left click behavior based on active tool
+		if (event.button === 0) {
+			if ($appState.activeTool === 'select') {
+				// Check if clicking on an existing camera for dragging
+				for (const camera of project.cameras) {
+					const distance = Math.sqrt((camera.x - x) ** 2 + (camera.y - y) ** 2);
+					if (distance < 20) {
+						draggingItem = { type: 'camera', id: camera.id, startX: camera.x, startY: camera.y };
+						selectCamera(camera.id);
+						canvas.style.cursor = 'grabbing';
+						return;
+					}
+				}
+
+				// Check if clicking on an existing infrastructure for dragging
+				for (const component of project.infrastructure) {
+					const distance = Math.sqrt((component.x - x) ** 2 + (component.y - y) ** 2);
+					if (distance < 20) {
+						draggingItem = { type: 'infrastructure', id: component.id, startX: component.x, startY: component.y };
+						selectInfrastructure(component.id);
+						canvas.style.cursor = 'grabbing';
+						return;
+					}
+				}
+			} else if ($appState.activeTool === 'pan') {
+				isDragging = true;
+				dragStart = { x: event.clientX, y: event.clientY };
+				canvas.style.cursor = 'grabbing';
+			} else if ($appState.activeTool === 'scale') {
+				scaleDrawing = true;
+				tempScaleLine = { x1: x, y1: y, x2: x, y2: y };
+			}
 		}
 	}
 
@@ -446,7 +457,8 @@
 				}
 			}
 			canvas.style.cursor = hoveringOverItem ? 'grab' : 'default';
-		} else if (isDragging && $appState.activeTool === 'pan') {
+		} else if (isDragging) {
+			// Handle panning (can be triggered by right-click or pan tool + left-click)
 			const deltaX = event.clientX - dragStart.x;
 			const deltaY = event.clientY - dragStart.y;
 			
@@ -563,6 +575,11 @@
 		event.preventDefault();
 	}
 
+	function handleContextMenu(event: MouseEvent) {
+		// Prevent right-click context menu
+		event.preventDefault();
+	}
+
 	// Reactive updates
 	$effect(() => {
 		if (canvas) {
@@ -604,6 +621,7 @@
 		onwheel={handleWheel}
 		ondrop={handleDrop}
 		ondragover={handleDragOver}
+		oncontextmenu={handleContextMenu}
 	></canvas>
 	
 	<svg 
