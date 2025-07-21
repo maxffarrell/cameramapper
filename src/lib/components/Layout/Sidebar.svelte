@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure } from '$lib/stores/app.js';
-	import { Upload, Ruler, Camera, Server } from 'lucide-svelte';
+	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure, addCustomCameraModel } from '$lib/stores/app.js';
+	import { Upload, Ruler, Camera, Server, Plus } from 'lucide-svelte';
 	import CameraIcons from '$lib/components/Icons/CameraIcons.svelte';
 	import FeatureIcons from '$lib/components/Icons/FeatureIcons.svelte';
+	import CustomCameraBuilder from '$lib/components/CustomCameraBuilder.svelte';
 	import type { CameraModel } from '$lib/types.js';
 
 	let { onPdfUpload, onScaleSet } = $props<{
@@ -12,6 +13,7 @@
 
 	let fileInput: HTMLInputElement;
 	let searchTerm = $state('');
+	let showCustomBuilder = $state(false);
 
 	const filteredCameraModels = $derived(
 		$cameraModels.filter(model => {
@@ -54,6 +56,10 @@
 		$appState.currentProject?.infrastructure.find(i => i.id === $appState.selectedInfrastructureId) : 
 		undefined
 	);
+
+	function handleCustomCameraCreated(event: CustomEvent<CameraModel>) {
+		addCustomCameraModel(event.detail);
+	}
 </script>
 
 <aside class="w-80 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
@@ -129,13 +135,32 @@
 				>
 					<div class="flex items-start space-x-3">
 						<div class="flex-shrink-0 mt-1">
-							<CameraIcons type={model.type} size={28} class="text-blue-600 dark:text-blue-400" />
+							{#if model.imageUrl}
+								<img 
+									src={model.imageUrl} 
+									alt={model.name}
+									class="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-600"
+									onerror={(e) => {
+										e.currentTarget.style.display = 'none';
+										const fallback = e.currentTarget.nextElementSibling;
+										if (fallback) fallback.style.display = 'flex';
+									}}
+								/>
+								<div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 flex items-center justify-center" style="display: none;">
+									<span class="text-lg">{model.emoji}</span>
+								</div>
+							{:else}
+								<div class="w-12 h-12 rounded-md border-2 border-dashed flex items-center justify-center" style="border-color: {model.color}; background-color: {model.color}15;">
+									<span class="text-xl">{model.emoji}</span>
+								</div>
+							{/if}
 						</div>
 						<div class="flex-1 min-w-0">
 							<div class="text-sm font-medium text-gray-900 dark:text-white truncate">
 								{model.name}
 							</div>
 							<div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+								<span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color: {model.color}"></span>
 								{model.brand} • FOV: {model.fovAngle}° • Range: {model.range}ft
 							</div>
 							<div class="text-xs text-green-600 dark:text-green-400 font-medium">
@@ -157,6 +182,17 @@
 				</div>
 			{/each}
 		</div>
+		
+		<!-- Custom Camera Builder Button -->
+		<div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+			<button
+				onclick={() => showCustomBuilder = true}
+				class="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+			>
+				<Plus size={16} />
+				<span>Create Custom Camera</span>
+			</button>
+		</div>
 	</div>
 
 	<!-- Infrastructure Section -->
@@ -174,16 +210,24 @@
 					tabindex="0"
 					draggable="true"
 					ondragstart={(e) => startDrag(e, 'infrastructure', model)}
-					class="p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 cursor-grab active:cursor-grabbing transition-colors"
+					class="p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 cursor-grab active:cursor-grabbing transition-colors"
 				>
-					<div class="flex items-center space-x-3">
-						<span class="text-2xl">{model.emoji}</span>
-						<div class="flex-1">
-							<div class="text-sm font-medium text-gray-900 dark:text-white">
+					<div class="flex items-start space-x-3">
+						<div class="flex-shrink-0 mt-1">
+							<div class="w-12 h-12 rounded-md border-2 border-dashed border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+								<span class="text-xl">{model.emoji}</span>
+							</div>
+						</div>
+						<div class="flex-1 min-w-0">
+							<div class="text-sm font-medium text-gray-900 dark:text-white truncate">
 								{model.name}
 							</div>
-							<div class="text-xs text-green-600 dark:text-green-400">
-								${model.price}
+							<div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+								<span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1"></span>
+								Infrastructure • {model.type.toUpperCase()}
+							</div>
+							<div class="text-xs text-green-600 dark:text-green-400 font-medium">
+								${model.price.toLocaleString()}
 							</div>
 						</div>
 					</div>
@@ -273,3 +317,10 @@
 		{/if}
 	</div>
 </aside>
+
+<!-- Custom Camera Builder Modal -->
+<CustomCameraBuilder 
+	isOpen={showCustomBuilder} 
+	onClose={() => showCustomBuilder = false}
+	on:created={handleCustomCameraCreated}
+/>

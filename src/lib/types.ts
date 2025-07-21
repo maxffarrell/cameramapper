@@ -8,6 +8,8 @@ export interface CameraModel {
 	features: string[];
 	type: 'dome' | 'bullet' | 'ptz' | 'fisheye';
 	emoji: string; // Keep for backward compatibility, but use icons instead
+	color: string; // Brand color for FOV cones and icons
+	imageUrl?: string; // Optional camera image
 }
 
 export interface Camera {

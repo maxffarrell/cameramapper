@@ -43,8 +43,8 @@
 </script>
 
 {#if isOpen && scaleLine}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4">
+	<div class="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50">
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4 shadow-2xl border border-gray-200 dark:border-gray-700">
 			<div class="flex items-center justify-between mb-4">
 				<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
 					Set Scale Reference

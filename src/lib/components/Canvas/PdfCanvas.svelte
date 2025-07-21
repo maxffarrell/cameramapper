@@ -14,6 +14,8 @@
 	let scaleDrawing = $state(false);
 	let scaleLine = $state<{ x1: number; y1: number; x2: number; y2: number; pixelLength: number } | null>(null);
 	let tempScaleLine = $state<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
+	let draggingItem = $state<{ type: 'camera' | 'infrastructure', id: string, startX: number, startY: number } | null>(null);
+	let wasDragging = false;
 
 	let { onScaleLineDrawn, onEditCamera, onEditInfrastructure } = $props<{
 		onScaleLineDrawn?: (line: { x1: number; y1: number; x2: number; y2: number; pixelLength: number }) => void;
@@ -72,16 +74,49 @@
 			drawInfrastructure(ctx, component);
 		});
 
-		// Draw temporary scale line
+		// Draw temporary scale line with enhanced visibility
 		if (tempScaleLine) {
+			// Draw background line for better visibility
+			ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+			ctx.lineWidth = 5;
+			ctx.beginPath();
+			ctx.moveTo(tempScaleLine.x1, tempScaleLine.y1);
+			ctx.lineTo(tempScaleLine.x2, tempScaleLine.y2);
+			ctx.stroke();
+			
+			// Draw main line
 			ctx.strokeStyle = '#ef4444';
 			ctx.lineWidth = 3;
-			ctx.setLineDash([5, 5]);
+			ctx.setLineDash([8, 4]);
 			ctx.beginPath();
 			ctx.moveTo(tempScaleLine.x1, tempScaleLine.y1);
 			ctx.lineTo(tempScaleLine.x2, tempScaleLine.y2);
 			ctx.stroke();
 			ctx.setLineDash([]);
+			
+			// Draw endpoints
+			ctx.fillStyle = '#ef4444';
+			ctx.beginPath();
+			ctx.arc(tempScaleLine.x1, tempScaleLine.y1, 5, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.arc(tempScaleLine.x2, tempScaleLine.y2, 5, 0, 2 * Math.PI);
+			ctx.fill();
+			
+			// Draw measurement text
+			const dx = tempScaleLine.x2 - tempScaleLine.x1;
+			const dy = tempScaleLine.y2 - tempScaleLine.y1;
+			const length = Math.sqrt(dx * dx + dy * dy);
+			const midX = (tempScaleLine.x1 + tempScaleLine.x2) / 2;
+			const midY = (tempScaleLine.y1 + tempScaleLine.y2) / 2;
+			
+			ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+			ctx.fillRect(midX - 30, midY - 15, 60, 20);
+			ctx.fillStyle = 'white';
+			ctx.font = '12px Arial';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(`${length.toFixed(0)}px`, midX, midY);
 		}
 
 		// Draw existing scale reference line
@@ -115,19 +150,50 @@
 		
 		ctx.save();
 		ctx.translate(camera.x, camera.y);
-		ctx.rotate((camera.rotation * Math.PI) / 180);
 		
-		// Draw camera icon
-		ctx.font = '24px Arial';
-		ctx.textAlign = 'center';
-		ctx.textBaseline = 'middle';
-		
+		// Draw selection highlight
 		if (isSelected) {
-			ctx.shadowColor = 'red';
-			ctx.shadowBlur = 10;
+			ctx.shadowColor = model.color;
+			ctx.shadowBlur = 15;
 		}
 		
+		// Draw camera background circle
+		ctx.fillStyle = model.color;
+		ctx.globalAlpha = 0.2;
+		ctx.beginPath();
+		ctx.arc(0, 0, 16, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.globalAlpha = 1;
+		
+		// Draw camera border
+		ctx.strokeStyle = model.color;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(0, 0, 16, 0, 2 * Math.PI);
+		ctx.stroke();
+		
+		// Draw camera icon/emoji
+		ctx.font = '20px Arial';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillStyle = model.color;
 		ctx.fillText(model.emoji, 0, 0);
+		
+		// Draw rotation indicator
+		ctx.rotate((camera.rotation * Math.PI) / 180);
+		ctx.strokeStyle = model.color;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.lineTo(20, 0);
+		ctx.stroke();
+		
+		// Draw arrow head
+		ctx.beginPath();
+		ctx.moveTo(15, -3);
+		ctx.lineTo(20, 0);
+		ctx.lineTo(15, 3);
+		ctx.stroke();
 		
 		ctx.restore();
 	}
@@ -138,16 +204,44 @@
 		ctx.save();
 		ctx.translate(component.x, component.y);
 		
+		// Draw selection highlight
+		if (isSelected) {
+			ctx.shadowColor = '#6366f1'; // Indigo color for infrastructure
+			ctx.shadowBlur = 15;
+		}
+		
+		// Draw infrastructure background circle
+		ctx.fillStyle = '#6366f1'; // Indigo color for infrastructure
+		ctx.globalAlpha = 0.15;
+		ctx.beginPath();
+		ctx.arc(0, 0, 20, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.globalAlpha = 1;
+		
+		// Draw infrastructure border
+		ctx.strokeStyle = '#6366f1';
+		ctx.lineWidth = isSelected ? 3 : 2;
+		ctx.beginPath();
+		ctx.arc(0, 0, 20, 0, 2 * Math.PI);
+		ctx.stroke();
+		
+		// Draw infrastructure emoji/icon
 		ctx.font = '24px Arial';
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
-		
-		if (isSelected) {
-			ctx.shadowColor = 'blue';
-			ctx.shadowBlur = 10;
-		}
-		
+		ctx.fillStyle = '#6366f1';
 		ctx.fillText(component.emoji, 0, 0);
+		
+		// Draw component name label for selected items
+		if (isSelected) {
+			ctx.font = '10px Arial';
+			ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+			ctx.fillRect(-25, 25, 50, 16);
+			ctx.fillStyle = 'white';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(component.name.substring(0, 12), 0, 33);
+		}
 		
 		ctx.restore();
 	}
@@ -214,6 +308,12 @@
 	function handleCanvasClick(event: MouseEvent) {
 		if ($appState.activeTool !== 'select') return;
 
+		// Don't process clicks if we just finished dragging
+		if (wasDragging) {
+			wasDragging = false;
+			return;
+		}
+
 		const rect = canvas.getBoundingClientRect();
 		const project = $appState.currentProject;
 		if (!project) return;
@@ -266,7 +366,29 @@
 		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
 		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
 
-		if ($appState.activeTool === 'pan') {
+		if ($appState.activeTool === 'select') {
+			// Check if clicking on an existing camera for dragging
+			for (const camera of project.cameras) {
+				const distance = Math.sqrt((camera.x - x) ** 2 + (camera.y - y) ** 2);
+				if (distance < 20) {
+					draggingItem = { type: 'camera', id: camera.id, startX: camera.x, startY: camera.y };
+					selectCamera(camera.id);
+					canvas.style.cursor = 'grabbing';
+					return;
+				}
+			}
+
+			// Check if clicking on an existing infrastructure for dragging
+			for (const component of project.infrastructure) {
+				const distance = Math.sqrt((component.x - x) ** 2 + (component.y - y) ** 2);
+				if (distance < 20) {
+					draggingItem = { type: 'infrastructure', id: component.id, startX: component.x, startY: component.y };
+					selectInfrastructure(component.id);
+					canvas.style.cursor = 'grabbing';
+					return;
+				}
+			}
+		} else if ($appState.activeTool === 'pan') {
 			isDragging = true;
 			dragStart = { x: event.clientX, y: event.clientY };
 			canvas.style.cursor = 'grabbing';
@@ -285,7 +407,35 @@
 		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
 		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
 
-		if (isDragging && $appState.activeTool === 'pan') {
+		if (draggingItem) {
+			// Update position of dragged item
+			if (draggingItem.type === 'camera') {
+				updateCamera(draggingItem.id, { x, y });
+			} else if (draggingItem.type === 'infrastructure') {
+				updateInfrastructure(draggingItem.id, { x, y });
+			}
+			draw();
+		} else if ($appState.activeTool === 'select') {
+			// Update cursor based on hover state
+			let hoveringOverItem = false;
+			for (const camera of project.cameras) {
+				const distance = Math.sqrt((camera.x - x) ** 2 + (camera.y - y) ** 2);
+				if (distance < 20) {
+					hoveringOverItem = true;
+					break;
+				}
+			}
+			if (!hoveringOverItem) {
+				for (const component of project.infrastructure) {
+					const distance = Math.sqrt((component.x - x) ** 2 + (component.y - y) ** 2);
+					if (distance < 20) {
+						hoveringOverItem = true;
+						break;
+					}
+				}
+			}
+			canvas.style.cursor = hoveringOverItem ? 'grab' : 'default';
+		} else if (isDragging && $appState.activeTool === 'pan') {
 			const deltaX = event.clientX - dragStart.x;
 			const deltaY = event.clientY - dragStart.y;
 			
@@ -302,7 +452,12 @@
 	}
 
 	function handleMouseUp() {
-		if (scaleDrawing && tempScaleLine) {
+		if (draggingItem) {
+			// End dragging operation
+			wasDragging = true;
+			draggingItem = null;
+			canvas.style.cursor = 'default';
+		} else if (scaleDrawing && tempScaleLine) {
 			const dx = tempScaleLine.x2 - tempScaleLine.x1;
 			const dy = tempScaleLine.y2 - tempScaleLine.y1;
 			const pixelLength = Math.sqrt(dx * dx + dy * dy);
@@ -444,7 +599,7 @@
 					{@const isSelected = $appState.selectedCameraId === camera.id}
 					{@const transform = $appState.currentProject.transform}
 					{@const fov = camera.fovOverride || model.fovAngle}
-					{@const range = camera.rangeOverride || model.range}
+					{@const range = (camera.rangeOverride || model.range) * $appState.currentProject.scale.pixelsPerFoot}
 					{@const startAngle = camera.rotation - fov / 2}
 					{@const endAngle = camera.rotation + fov / 2}
 					{@const x = camera.x * transform.zoom + transform.panX * transform.zoom}
@@ -456,6 +611,8 @@
 						   L {x + Math.cos((startAngle * Math.PI) / 180) * scaledRange} {y + Math.sin((startAngle * Math.PI) / 180) * scaledRange}
 						   A {scaledRange} {scaledRange} 0 0 1 {x + Math.cos((endAngle * Math.PI) / 180) * scaledRange} {y + Math.sin((endAngle * Math.PI) / 180) * scaledRange}
 						   Z"
+						fill={model.color}
+						stroke={model.color}
 						class="camera-fov {isSelected ? 'selected' : ''}"
 					/>
 				{/if}

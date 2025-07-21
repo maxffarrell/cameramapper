@@ -1,12 +1,42 @@
 <script lang="ts">
-	import { appState } from '$lib/stores/app.js';
-	import { Save, Upload, Download } from 'lucide-svelte';
+	import { appState, updateProjectName } from '$lib/stores/app.js';
+	import { Save, Upload, Download, Edit } from 'lucide-svelte';
 
 	let { onSave, onLoad, onExport } = $props<{
 		onSave: () => void;
 		onLoad: () => void;
 		onExport: () => void;
 	}>();
+
+	let isEditingName = $state(false);
+	let projectNameInput = $state('');
+
+	function startEditingName() {
+		if ($appState.currentProject) {
+			projectNameInput = $appState.currentProject.name;
+			isEditingName = true;
+		}
+	}
+
+	function saveProjectName() {
+		if (projectNameInput.trim()) {
+			updateProjectName(projectNameInput.trim());
+		}
+		isEditingName = false;
+	}
+
+	function cancelEditingName() {
+		isEditingName = false;
+		projectNameInput = '';
+	}
+
+	function handleNameKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			saveProjectName();
+		} else if (event.key === 'Escape') {
+			cancelEditingName();
+		}
+	}
 </script>
 
 <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
@@ -16,9 +46,26 @@
 				Camera System Designer
 			</h1>
 			{#if $appState.currentProject}
-				<span class="text-sm text-gray-500 dark:text-gray-400">
-					{$appState.currentProject.name}
-				</span>
+				<div class="flex items-center space-x-2">
+					{#if isEditingName}
+						<input
+							bind:value={projectNameInput}
+							onkeydown={handleNameKeydown}
+							onblur={saveProjectName}
+							class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+							placeholder="Project name"
+							autofocus
+						/>
+					{:else}
+						<button
+							onclick={startEditingName}
+							class="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+						>
+							<span>{$appState.currentProject.name}</span>
+							<Edit size={14} class="opacity-60" />
+						</button>
+					{/if}
+				</div>
 			{/if}
 		</div>
 

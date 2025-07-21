@@ -38,7 +38,8 @@ export const cameraModels = writable<CameraModel[]>([
 		price: 299,
 		features: ['Night Vision', 'Color at Night', 'Audio'],
 		type: 'dome',
-		emoji: '📹'
+		emoji: '📹',
+		color: '#3b82f6' // Blue for Hikvision
 	},
 	{
 		id: 'hik-ds2cd2087g2',
@@ -49,7 +50,8 @@ export const cameraModels = writable<CameraModel[]>([
 		price: 379,
 		features: ['Night Vision', 'Varifocal', 'Audio'],
 		type: 'bullet',
-		emoji: '🎥'
+		emoji: '🎥',
+		color: '#3b82f6' // Blue for Hikvision
 	},
 	{
 		id: 'dahua-ipc-hfw3849t1',
@@ -60,7 +62,8 @@ export const cameraModels = writable<CameraModel[]>([
 		price: 245,
 		features: ['Night Vision', 'Smart Detection'],
 		type: 'bullet',
-		emoji: '📷'
+		emoji: '📷',
+		color: '#10b981' // Green for Dahua
 	},
 	{
 		id: 'axis-p3245',
@@ -71,7 +74,8 @@ export const cameraModels = writable<CameraModel[]>([
 		price: 895,
 		features: ['Varifocal', 'Night Vision', 'Analytics'],
 		type: 'dome',
-		emoji: '🔍'
+		emoji: '🔍',
+		color: '#f59e0b' // Amber for Axis
 	},
 	{
 		id: 'hikvision-ptz-ds2de4a425iw',
@@ -82,7 +86,8 @@ export const cameraModels = writable<CameraModel[]>([
 		price: 1299,
 		features: ['PTZ', 'Night Vision', 'Auto Tracking', 'Audio'],
 		type: 'ptz',
-		emoji: '🎯'
+		emoji: '🎯',
+		color: '#3b82f6' // Blue for Hikvision
 	},
 	{
 		id: 'axis-m3067-p',
@@ -93,7 +98,8 @@ export const cameraModels = writable<CameraModel[]>([
 		price: 649,
 		features: ['Fisheye', 'Night Vision', 'Dewarping'],
 		type: 'fisheye',
-		emoji: '👁️'
+		emoji: '👁️',
+		color: '#f59e0b' // Amber for Axis
 	}
 ]);
 
@@ -282,4 +288,22 @@ export function setPdfFile(file: File, url?: string) {
 
 export function setLoading(isLoading: boolean) {
 	appState.update(state => ({ ...state, isLoading }));
+}
+
+export function updateProjectName(name: string) {
+	appState.update(state => {
+		if (!state.currentProject) return state;
+		return {
+			...state,
+			currentProject: {
+				...state.currentProject,
+				name,
+				updatedAt: new Date()
+			}
+		};
+	});
+}
+
+export function addCustomCameraModel(model: CameraModel) {
+	cameraModels.update(models => [...models, model]);
 }

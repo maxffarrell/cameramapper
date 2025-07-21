@@ -146,15 +146,19 @@
 }
 
 .camera-fov {
-  fill: hsl(var(--primary) / 0.2);
-  stroke: hsl(var(--primary) / 0.8);
+  opacity: 0.25;
   stroke-width: 2;
   pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
 .camera-fov.selected {
-  fill: hsl(var(--destructive) / 0.2);
-  stroke: hsl(var(--destructive) / 0.8);
+  opacity: 0.4;
+  stroke-width: 3;
+}
+
+.camera-fov:hover {
+  opacity: 0.35;
 }
 
 .camera-icon {
