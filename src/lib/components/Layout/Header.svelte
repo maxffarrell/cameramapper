@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { appState, updateProjectName } from '$lib/stores/app.js';
+	import { appState, updateProjectName, cameraModels } from '$lib/stores/app.js';
 	import { Save, Upload, Download, Edit } from 'lucide-svelte';
+	import { createExportZip, downloadZip } from '$lib/utils/export.js';
 
-	let { onSave, onLoad, onExport } = $props<{
-		onSave: () => void;
+	let { onLoad, getCanvasElements } = $props<{
 		onLoad: () => void;
-		onExport: () => void;
+		getCanvasElements: () => { canvas: HTMLCanvasElement; svgElement: SVGSVGElement } | null;
 	}>();
 
 	let isEditingName = $state(false);
@@ -35,6 +35,36 @@
 			saveProjectName();
 		} else if (event.key === 'Escape') {
 			cancelEditingName();
+		}
+	}
+
+	async function handleExport() {
+		const project = $appState.currentProject;
+		const models = $cameraModels;
+		
+		if (!project) {
+			alert('No project to export');
+			return;
+		}
+
+		const elements = getCanvasElements();
+		if (!elements) {
+			alert('Unable to access canvas elements');
+			return;
+		}
+
+		try {
+			const zipBlob = await createExportZip(
+				project,
+				models,
+				elements.canvas,
+				elements.svgElement
+			);
+			
+			downloadZip(zipBlob, project.name);
+		} catch (error) {
+			console.error('Export failed:', error);
+			alert('Export failed. Please try again.');
 		}
 	}
 </script>
@@ -80,19 +110,11 @@
 				</button>
 
 				<button
-					onclick={onSave}
-					class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-				>
-					<Save size={16} />
-					<span>Save</span>
-				</button>
-
-				<button
-					onclick={onExport}
+					onclick={handleExport}
 					class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
 				>
 					<Download size={16} />
-					<span>Export CSV</span>
+					<span>Export ZIP</span>
 				</button>
 			</div>
 

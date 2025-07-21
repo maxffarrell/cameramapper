@@ -94,60 +94,11 @@
 		input.click();
 	}
 
-	function handleExport() {
-		if (!$appState.currentProject) return;
-		
-		import('$lib/stores/app.js').then(({ cameraModels }) => {
-			cameraModels.subscribe(models => {
-				const cameras = $appState.currentProject!.cameras;
-				const infrastructure = $appState.currentProject!.infrastructure;
-				const scale = $appState.currentProject!.scale;
-				
-				let csv = 'Type,Model,Brand,Label,X (pixels),Y (pixels),X (feet),Y (feet),Rotation,FOV,Range,Price,Features,Notes\n';
-				
-				cameras.forEach(camera => {
-					const model = models.find(m => m.id === camera.modelId);
-					const xFeet = (camera.x / scale.pixelsPerFoot).toFixed(1);
-					const yFeet = (camera.y / scale.pixelsPerFoot).toFixed(1);
-					const fov = camera.fovOverride || model?.fovAngle || 0;
-					const range = camera.rangeOverride || model?.range || 0;
-					
-					csv += `Camera,"${model?.name || 'Unknown'}","${model?.brand || 'Unknown'}","${camera.label || ''}",${camera.x.toFixed(1)},${camera.y.toFixed(1)},${xFeet},${yFeet},${camera.rotation},${fov},${range},$${model?.price || 0},"${model?.features.join('; ') || ''}","${camera.notes || ''}"\n`;
-				});
-				
-				infrastructure.forEach(component => {
-					const xFeet = (component.x / scale.pixelsPerFoot).toFixed(1);
-					const yFeet = (component.y / scale.pixelsPerFoot).toFixed(1);
-					
-					csv += `Infrastructure,"${component.name}","","",${ component.x.toFixed(1)},${component.y.toFixed(1)},${xFeet},${yFeet},,,,$${component.price},"",""\n`;
-				});
-				
-				// Add summary
-				const totalCameras = cameras.length;
-				const totalInfrastructure = infrastructure.length;
-				const totalCost = cameras.reduce((sum, cam) => {
-					const model = models.find(m => m.id === cam.modelId);
-					return sum + (model?.price || 0);
-				}, 0) + infrastructure.reduce((sum, comp) => sum + comp.price, 0);
-				
-				csv += `\nSummary\n`;
-				csv += `Total Cameras,${totalCameras}\n`;
-				csv += `Total Infrastructure,${totalInfrastructure}\n`;
-				csv += `Total Cost,$${totalCost.toLocaleString()}\n`;
-				csv += `Scale,${scale.pixelsPerFoot.toFixed(1)} pixels per foot\n`;
-				csv += `Export Date,${new Date().toLocaleString()}\n`;
-				
-				const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-				const url = URL.createObjectURL(blob);
-				
-				const link = document.createElement('a');
-				link.href = url;
-				link.download = `${$appState.currentProject!.name}-camera-system-${new Date().toISOString().split('T')[0]}.csv`;
-				link.click();
-				
-				URL.revokeObjectURL(url);
-			})();
-		});
+	function getCanvasElements() {
+		if (pdfCanvas) {
+			return pdfCanvas.getCanvasElements();
+		}
+		return null;
 	}
 
 	function handleZoomIn() {
@@ -173,9 +124,8 @@
 
 <div class="h-screen flex flex-col">
 	<Header 
-		onSave={handleSave}
 		onLoad={handleLoad}
-		onExport={handleExport}
+		getCanvasElements={getCanvasElements}
 	/>
 	
 	<div class="flex-1 flex">

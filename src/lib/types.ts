@@ -4,12 +4,12 @@ export interface CameraModel {
 	brand: string;
 	fovAngle: number; // degrees
 	range: number; // feet
-	price: number;
 	features: string[];
 	type: 'dome' | 'bullet' | 'ptz' | 'fisheye';
 	emoji: string; // Keep for backward compatibility, but use icons instead
 	color: string; // Brand color for FOV cones and icons
 	imageUrl?: string; // Optional camera image
+	isCustom?: boolean; // Flag to identify custom cameras that can be edited
 }
 
 export interface Camera {
@@ -22,6 +22,7 @@ export interface Camera {
 	notes?: string;
 	fovOverride?: number;
 	rangeOverride?: number;
+	coneSize?: number; // Scale factor for FOV cone display (0.1 to 2.0, default 0.5)
 }
 
 export interface InfrastructureComponent {
@@ -30,7 +31,6 @@ export interface InfrastructureComponent {
 	name: string;
 	x: number;
 	y: number;
-	price: number;
 	emoji: string;
 }
 
@@ -52,6 +52,13 @@ export interface Transform {
 	panY: number;
 }
 
+export interface CompassRose {
+	isSet: boolean;
+	northAngle: number; // Angle in degrees where north points (0 = right, 90 = down)
+	x: number; // Position on canvas
+	y: number; // Position on canvas
+}
+
 export interface Project {
 	id: string;
 	name: string;
@@ -61,6 +68,7 @@ export interface Project {
 	infrastructure: InfrastructureComponent[];
 	scale: Scale;
 	transform: Transform;
+	compassRose?: CompassRose;
 	createdAt: Date;
 	updatedAt: Date;
 }

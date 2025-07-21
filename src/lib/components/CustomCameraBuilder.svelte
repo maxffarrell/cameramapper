@@ -17,7 +17,6 @@
 		brand: 'Custom',
 		fovAngle: 90,
 		range: 100,
-		price: 0,
 		features: [] as string[],
 		type: 'bullet' as const,
 		emoji: '📹',
@@ -82,11 +81,11 @@
 			brand: customCamera.brand,
 			fovAngle: customCamera.fovAngle,
 			range: customCamera.range,
-			price: customCamera.price,
 			features: customCamera.features,
 			type: customCamera.type,
 			emoji: customCamera.emoji,
-			color: customCamera.color
+			color: customCamera.color,
+			isCustom: true
 		};
 
 		dispatch('created', camera);
@@ -100,7 +99,6 @@
 			brand: 'Custom',
 			fovAngle: 90,
 			range: 100,
-			price: 0,
 			features: [],
 			type: 'bullet',
 			emoji: '📹',
@@ -154,7 +152,7 @@
 				</div>
 
 				<!-- Technical Specs -->
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 							FOV Angle (degrees)
@@ -177,18 +175,6 @@
 							type="number"
 							min="10"
 							max="1000"
-							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-						/>
-					</div>
-
-					<div>
-						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							Price ($)
-						</label>
-						<input
-							bind:value={customCamera.price}
-							type="number"
-							min="0"
 							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
 					</div>

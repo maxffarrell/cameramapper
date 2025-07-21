@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure, addCustomCameraModel } from '$lib/stores/app.js';
+	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure, addCustomCameraModel, updateCamera } from '$lib/stores/app.js';
 	import { Upload, Ruler, Camera, Server, Plus } from 'lucide-svelte';
 	import CameraIcons from '$lib/components/Icons/CameraIcons.svelte';
 	import FeatureIcons from '$lib/components/Icons/FeatureIcons.svelte';
-	import CustomCameraBuilder from '$lib/components/CustomCameraBuilder.svelte';
+	import SidebarCustomCameraBuilder from '$lib/components/SidebarCustomCameraBuilder.svelte';
 	import type { CameraModel } from '$lib/types.js';
 
 	let { onPdfUpload, onScaleSet } = $props<{
@@ -14,6 +14,7 @@
 	let fileInput: HTMLInputElement;
 	let searchTerm = $state('');
 	let showCustomBuilder = $state(false);
+	let showScaleModal = $state(false);
 
 	const filteredCameraModels = $derived(
 		$cameraModels.filter(model => {
@@ -25,8 +26,7 @@
 				model.fovAngle.toString().includes(term) ||
 				model.range.toString().includes(term) ||
 				(term.includes('fov') && model.fovAngle.toString().includes(term.replace('fov', '').trim())) ||
-				(term.includes('range') && model.range.toString().includes(term.replace('range', '').trim())) ||
-				(term.includes('price') && model.price.toString().includes(term.replace('price', '').trim()))
+				(term.includes('range') && model.range.toString().includes(term.replace('range', '').trim()))
 			);
 		})
 	);
@@ -63,10 +63,18 @@
 </script>
 
 <aside class="w-80 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-	<!-- PDF Upload Section -->
-	<div class="p-4 border-b border-gray-200 dark:border-gray-700">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Step 1: Floor Plan</h2>
-		<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Start by uploading your building's floor plan PDF</p>
+	{#if showCustomBuilder}
+		<!-- Custom Camera Builder -->
+		<SidebarCustomCameraBuilder 
+			onClose={() => showCustomBuilder = false}
+			on:created={handleCustomCameraCreated}
+		/>
+	{:else}
+		<!-- Main Sidebar Content -->
+		<!-- PDF Upload Section -->
+		<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Step 1: Floor Plan</h2>
+			<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Start by uploading your building's floor plan PDF</p>
 		
 		<button
 			onclick={() => fileInput.click()}
@@ -163,9 +171,6 @@
 								<span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color: {model.color}"></span>
 								{model.brand} • FOV: {model.fovAngle}° • Range: {model.range}ft
 							</div>
-							<div class="text-xs text-green-600 dark:text-green-400 font-medium">
-								${model.price.toLocaleString()}
-							</div>
 						</div>
 					</div>
 					
@@ -226,9 +231,6 @@
 								<span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1"></span>
 								Infrastructure • {model.type.toUpperCase()}
 							</div>
-							<div class="text-xs text-green-600 dark:text-green-400 font-medium">
-								${model.price.toLocaleString()}
-							</div>
 						</div>
 					</div>
 				</div>
@@ -261,14 +263,53 @@
 					</div>
 				</div>
 				
+				<!-- Rotation Control -->
 				<div>
-					<span class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-						Rotation
-					</span>
-					<div class="text-sm text-gray-600 dark:text-gray-400">
-						{selectedCamera.rotation}°
-					</div>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+						Rotation: {selectedCamera.rotation}°
+					</label>
+					<input
+						type="range"
+						min="0"
+						max="359"
+						bind:value={selectedCamera.rotation}
+						onchange={() => updateCamera(selectedCamera.id, { rotation: selectedCamera.rotation })}
+						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+					/>
 				</div>
+
+				<!-- FOV Cone Size Control -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+						Cone Size: {((selectedCamera.coneSize || 0.3) * 100).toFixed(0)}%
+					</label>
+					<input
+						type="range"
+						min="0.1"
+						max="2.0"
+						step="0.1"
+						bind:value={selectedCamera.coneSize}
+						onchange={() => updateCamera(selectedCamera.id, { coneSize: selectedCamera.coneSize || 0.3 })}
+						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+					/>
+				</div>
+
+				<!-- FOV Override -->
+				{#if model}
+					<div>
+						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							FOV Override: {selectedCamera.fovOverride || model.fovAngle}°
+						</label>
+						<input
+							type="range"
+							min="10"
+							max="360"
+							bind:value={selectedCamera.fovOverride}
+							onchange={() => updateCamera(selectedCamera.id, { fovOverride: selectedCamera.fovOverride || model.fovAngle })}
+							class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+						/>
+					</div>
+				{/if}
 				
 				<button
 					onclick={() => selectCamera(undefined)}
@@ -316,11 +357,5 @@
 			</div>
 		{/if}
 	</div>
+	{/if}
 </aside>
-
-<!-- Custom Camera Builder Modal -->
-<CustomCameraBuilder 
-	isOpen={showCustomBuilder} 
-	onClose={() => showCustomBuilder = false}
-	on:created={handleCustomCameraCreated}
-/>

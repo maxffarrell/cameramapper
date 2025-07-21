@@ -195,6 +195,18 @@
 		ctx.lineTo(15, 3);
 		ctx.stroke();
 		
+		// Reset rotation for text
+		ctx.rotate(-(camera.rotation * Math.PI) / 180);
+		
+		// Draw camera model name text overlay
+		ctx.font = '10px Arial';
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+		ctx.fillRect(-30, 25, 60, 14);
+		ctx.fillStyle = 'white';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillText(model.name.substring(0, 12), 0, 32);
+		
 		ctx.restore();
 	}
 
@@ -298,7 +310,6 @@
 				name: itemData.name,
 				x,
 				y,
-				price: itemData.price,
 				emoji: itemData.emoji
 			};
 			addInfrastructure(component);
@@ -571,6 +582,13 @@
 		}
 	});
 
+	export function getCanvasElements() {
+		return {
+			canvas,
+			svgElement
+		};
+	}
+
 	export { handlePdfUpload };
 </script>
 
@@ -600,11 +618,12 @@
 					{@const transform = $appState.currentProject.transform}
 					{@const fov = camera.fovOverride || model.fovAngle}
 					{@const range = (camera.rangeOverride || model.range) * $appState.currentProject.scale.pixelsPerFoot}
+					{@const coneSize = camera.coneSize || 0.3}
 					{@const startAngle = camera.rotation - fov / 2}
 					{@const endAngle = camera.rotation + fov / 2}
 					{@const x = camera.x * transform.zoom + transform.panX * transform.zoom}
 					{@const y = camera.y * transform.zoom + transform.panY * transform.zoom}
-					{@const scaledRange = range * transform.zoom}
+					{@const scaledRange = range * transform.zoom * coneSize}
 					
 					<path
 						d="M {x} {y} 
