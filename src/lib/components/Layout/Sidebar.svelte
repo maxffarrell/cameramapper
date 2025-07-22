@@ -1,17 +1,19 @@
 <script lang="ts">
 	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure, addCustomCameraModel, updateCamera } from '$lib/stores/app.js';
-	import { Upload, Ruler, Camera, Server, Plus } from 'lucide-svelte';
+	import { Upload, Ruler, Camera, Server, Plus, RotateCw } from 'lucide-svelte';
 	import CameraIcons from '$lib/components/Icons/CameraIcons.svelte';
 	import FeatureIcons from '$lib/components/Icons/FeatureIcons.svelte';
 	import SidebarCustomCameraBuilder from '$lib/components/SidebarCustomCameraBuilder.svelte';
 	import type { CameraModel } from '$lib/types.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 
 	let { onPdfUpload, onScaleSet } = $props<{
 		onPdfUpload: (file: File) => void;
 		onScaleSet: () => void;
 	}>();
 
-	let fileInput: HTMLInputElement;
+	let fileInput = $state<HTMLInputElement>();
 	let searchTerm = $state('');
 	let showCustomBuilder = $state(false);
 	let showScaleModal = $state(false);
@@ -77,7 +79,7 @@
 			<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Start by uploading your building's floor plan PDF</p>
 		
 		<button
-			onclick={() => fileInput.click()}
+			onclick={() => fileInput?.click()}
 			class="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
 		>
 			<Upload size={20} class="text-gray-400" />
@@ -264,23 +266,35 @@
 				</div>
 				
 				<!-- Rotation Control -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-						Rotation: {selectedCamera.rotation}°
-					</label>
-					<input
-						type="range"
-						min="0"
-						max="359"
-						bind:value={selectedCamera.rotation}
-						onchange={() => updateCamera(selectedCamera.id, { rotation: selectedCamera.rotation })}
-						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-					/>
-				</div>
+				<Card>
+					<CardHeader class="pb-2">
+						<CardTitle class="flex items-center gap-2 text-sm">
+							<RotateCw size={16} />
+							Rotation: {selectedCamera.rotation}°
+						</CardTitle>
+					</CardHeader>
+					<CardContent class="space-y-2">
+						<input
+							type="range"
+							min="0"
+							max="359"
+							step="1"
+							bind:value={selectedCamera.rotation}
+							onchange={() => updateCamera(selectedCamera.id, { rotation: selectedCamera.rotation })}
+							class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+						/>
+						<div class="flex gap-1">
+							<Button size="sm" variant="outline" onclick={() => { selectedCamera.rotation = 0; updateCamera(selectedCamera.id, { rotation: 0 }); }}>N</Button>
+							<Button size="sm" variant="outline" onclick={() => { selectedCamera.rotation = 90; updateCamera(selectedCamera.id, { rotation: 90 }); }}>E</Button>
+							<Button size="sm" variant="outline" onclick={() => { selectedCamera.rotation = 180; updateCamera(selectedCamera.id, { rotation: 180 }); }}>S</Button>
+							<Button size="sm" variant="outline" onclick={() => { selectedCamera.rotation = 270; updateCamera(selectedCamera.id, { rotation: 270 }); }}>W</Button>
+						</div>
+					</CardContent>
+				</Card>
 
 				<!-- FOV Cone Size Control -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+					<label class="text-sm font-medium mb-2 block text-gray-700 dark:text-gray-300">
 						Cone Size: {((selectedCamera.coneSize || 0.3) * 100).toFixed(0)}%
 					</label>
 					<input
@@ -290,33 +304,36 @@
 						step="0.1"
 						bind:value={selectedCamera.coneSize}
 						onchange={() => updateCamera(selectedCamera.id, { coneSize: selectedCamera.coneSize || 0.3 })}
-						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+						class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
 					/>
 				</div>
 
 				<!-- FOV Override -->
 				{#if model}
 					<div>
-						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+						<label class="text-sm font-medium mb-2 block text-gray-700 dark:text-gray-300">
 							FOV Override: {selectedCamera.fovOverride || model.fovAngle}°
 						</label>
 						<input
 							type="range"
 							min="10"
 							max="360"
+							step="1"
 							bind:value={selectedCamera.fovOverride}
 							onchange={() => updateCamera(selectedCamera.id, { fovOverride: selectedCamera.fovOverride || model.fovAngle })}
-							class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+							class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
 						/>
 					</div>
 				{/if}
 				
-				<button
+				<Button
 					onclick={() => selectCamera(undefined)}
-					class="w-full px-3 py-2 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+					variant="destructive"
+					size="sm"
+					class="w-full"
 				>
 					Deselect
-				</button>
+				</Button>
 			</div>
 		{:else if selectedInfrastructure}
 			<div class="space-y-3">
@@ -338,12 +355,14 @@
 					</div>
 				</div>
 				
-				<button
+				<Button
 					onclick={() => selectInfrastructure(undefined)}
-					class="w-full px-3 py-2 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+					variant="destructive"
+					size="sm"
+					class="w-full"
 				>
 					Deselect
-				</button>
+				</Button>
 			</div>
 		{:else}
 			<div class="text-center p-6">

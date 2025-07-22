@@ -147,10 +147,10 @@
 				
 				<!-- Placeholder when no PDF is loaded -->
 				{#if !$appState.currentProject?.pdfFile}
-					<div class="absolute inset-0 flex items-center justify-center">
-						<div class="text-center text-gray-500 dark:text-gray-400 max-w-md mx-auto p-8">
-							<div class="text-6xl mb-6">🏗️</div>
-							<h2 class="text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+					<div class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-10">
+						<div class="text-center text-gray-500 dark:text-gray-400 max-w-lg mx-auto p-8">
+							<div class="text-8xl mb-8 animate-pulse">🏗️</div>
+							<h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200">
 								Camera System Designer
 							</h2>
 							<div class="space-y-3 text-sm">

@@ -2,6 +2,8 @@
 	import { appState, updateProjectName, cameraModels } from '$lib/stores/app.js';
 	import { Save, Upload, Download, Edit } from 'lucide-svelte';
 	import { createExportZip, downloadZip } from '$lib/utils/export.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 
 	let { onLoad, getCanvasElements } = $props<{
 		onLoad: () => void;
@@ -78,22 +80,23 @@
 			{#if $appState.currentProject}
 				<div class="flex items-center space-x-2">
 					{#if isEditingName}
-						<input
+						<Input
 							bind:value={projectNameInput}
 							onkeydown={handleNameKeydown}
 							onblur={saveProjectName}
-							class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+							class="text-sm w-48"
 							placeholder="Project name"
-							autofocus
 						/>
 					{:else}
-						<button
+						<Button
 							onclick={startEditingName}
-							class="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+							variant="ghost"
+							size="sm"
+							class="flex items-center space-x-1 text-sm"
 						>
 							<span>{$appState.currentProject.name}</span>
 							<Edit size={14} class="opacity-60" />
-						</button>
+						</Button>
 					{/if}
 				</div>
 			{/if}
@@ -101,21 +104,24 @@
 
 		<div class="flex items-center space-x-4">
 			<div class="flex items-center space-x-2">
-				<button
+				<Button
 					onclick={onLoad}
-					class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+					variant="outline"
+					size="sm"
+					class="flex items-center space-x-2"
 				>
 					<Upload size={16} />
 					<span>Load</span>
-				</button>
+				</Button>
 
-				<button
+				<Button
 					onclick={handleExport}
-					class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+					size="sm"
+					class="flex items-center space-x-2"
 				>
 					<Download size={16} />
 					<span>Export ZIP</span>
-				</button>
+				</Button>
 			</div>
 
 		</div>

@@ -291,8 +291,9 @@
 		if (!project) return;
 
 		const { transform } = project;
-		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
-		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+		// Correct coordinate transformation for accurate placement
+		const x = (event.clientX - rect.left) / transform.zoom - transform.panX;
+		const y = (event.clientY - rect.top) / transform.zoom - transform.panY;
 
 		if (type === 'camera') {
 			const camera: Camera = {
@@ -330,8 +331,9 @@
 		if (!project) return;
 
 		const { transform } = project;
-		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
-		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+		// Correct coordinate transformation for accurate placement
+		const x = (event.clientX - rect.left) / transform.zoom - transform.panX;
+		const y = (event.clientY - rect.top) / transform.zoom - transform.panY;
 
 		// Check for camera clicks
 		let clickedCamera: Camera | undefined;
@@ -374,8 +376,9 @@
 		if (!project) return;
 
 		const { transform } = project;
-		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
-		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+		// Correct coordinate transformation for accurate placement
+		const x = (event.clientX - rect.left) / transform.zoom - transform.panX;
+		const y = (event.clientY - rect.top) / transform.zoom - transform.panY;
 
 		// Right click for panning (regardless of active tool)
 		if (event.button === 2) {
@@ -426,8 +429,9 @@
 		if (!project) return;
 
 		const { transform } = project;
-		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
-		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+		// Correct coordinate transformation for accurate placement
+		const x = (event.clientX - rect.left) / transform.zoom - transform.panX;
+		const y = (event.clientY - rect.top) / transform.zoom - transform.panY;
 
 		if (draggingItem) {
 			// Update position of dragged item
@@ -462,11 +466,13 @@
 			const deltaX = event.clientX - dragStart.x;
 			const deltaY = event.clientY - dragStart.y;
 			
-			project.transform.panX += deltaX / project.transform.zoom;
-			project.transform.panY += deltaY / project.transform.zoom;
+			// Use store function for proper reactivity
+			updateTransform({
+				panX: project.transform.panX + deltaX / project.transform.zoom,
+				panY: project.transform.panY + deltaY / project.transform.zoom
+			});
 			
 			dragStart = { x: event.clientX, y: event.clientY };
-			draw();
 		} else if (scaleDrawing && tempScaleLine) {
 			tempScaleLine.x2 = x;
 			tempScaleLine.y2 = y;
@@ -516,8 +522,9 @@
 		if (!project) return;
 
 		const { transform } = project;
-		const x = (event.clientX - rect.left - transform.panX * transform.zoom) / transform.zoom;
-		const y = (event.clientY - rect.top - transform.panY * transform.zoom) / transform.zoom;
+		// Correct coordinate transformation for accurate placement
+		const x = (event.clientX - rect.left) / transform.zoom - transform.panX;
+		const y = (event.clientY - rect.top) / transform.zoom - transform.panY;
 
 		// Check for camera double-clicks
 		for (const camera of project.cameras) {
