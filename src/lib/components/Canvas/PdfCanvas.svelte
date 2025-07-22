@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateTransform } from '$lib/stores/app.js';
+	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateTransform, setDrawnScaleLine } from '$lib/stores/app.js';
 	import { loadPdf, renderPdfPage, drawPdfOnCanvas, type PdfPage } from '$lib/utils/pdf.js';
 	import type { Camera, InfrastructureComponent } from '$lib/types.js';
 
@@ -17,8 +17,7 @@
 	let draggingItem = $state<{ type: 'camera' | 'infrastructure', id: string, startX: number, startY: number } | null>(null);
 	let wasDragging = false;
 
-	let { onScaleLineDrawn, onEditCamera, onEditInfrastructure } = $props<{
-		onScaleLineDrawn?: (line: { x1: number; y1: number; x2: number; y2: number; pixelLength: number }) => void;
+	let { onEditCamera, onEditInfrastructure } = $props<{
 		onEditCamera?: (camera: Camera) => void;
 		onEditInfrastructure?: (component: InfrastructureComponent) => void;
 	}>();
@@ -500,9 +499,7 @@
 					pixelLength
 				};
 				
-				if (onScaleLineDrawn) {
-					onScaleLineDrawn(line);
-				}
+				setDrawnScaleLine(line);
 			}
 			
 			scaleDrawing = false;

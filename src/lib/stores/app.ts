@@ -272,6 +272,20 @@ export function updateScale(updates: Partial<typeof defaultProject.scale>) {
 	});
 }
 
+export function setDrawnScaleLine(line: { x1: number; y1: number; x2: number; y2: number; pixelLength: number } | undefined) {
+	appState.update(state => {
+		if (!state.currentProject) return state;
+		return {
+			...state,
+			currentProject: {
+				...state.currentProject,
+				drawnScaleLine: line,
+				updatedAt: new Date()
+			}
+		};
+	});
+}
+
 export function updateTransform(updates: Partial<typeof defaultProject.transform>) {
 	appState.update(state => {
 		if (!state.currentProject) return state;

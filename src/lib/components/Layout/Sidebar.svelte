@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure, addCustomCameraModel, updateCamera } from '$lib/stores/app.js';
-	import { Upload, Ruler, Camera, Server, Plus, RotateCw } from 'lucide-svelte';
+	import { appState, cameraModels, infrastructureModels, selectCamera, selectInfrastructure, addCustomCameraModel, updateCamera, updateScale, setActiveTool, setDrawnScaleLine } from '$lib/stores/app.js';
+	import { Upload, Ruler, Camera, Server, Plus, RotateCw, X, Check } from 'lucide-svelte';
 	import CameraIcons from '$lib/components/Icons/CameraIcons.svelte';
 	import FeatureIcons from '$lib/components/Icons/FeatureIcons.svelte';
 	import SidebarCustomCameraBuilder from '$lib/components/SidebarCustomCameraBuilder.svelte';
 	import type { CameraModel } from '$lib/types.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 
 	let { onPdfUpload, onScaleSet } = $props<{
 		onPdfUpload: (file: File) => void;
@@ -16,7 +17,9 @@
 	let fileInput = $state<HTMLInputElement>();
 	let searchTerm = $state('');
 	let showCustomBuilder = $state(false);
-	let showScaleModal = $state(false);
+	let showScaleSetting = $state(false);
+	let realWorldDistance = $state(10);
+	let units = $state<'feet' | 'meters' | 'inches' | 'centimeters'>('feet');
 
 	const filteredCameraModels = $derived(
 		$cameraModels.filter(model => {
@@ -62,65 +65,176 @@
 	function handleCustomCameraCreated(event: CustomEvent<CameraModel>) {
 		addCustomCameraModel(event.detail);
 	}
+
+	// Scale setting functions
+	const drawnScaleLine = $derived($appState.currentProject?.drawnScaleLine);
+
+	function handleSetScale() {
+		if (!drawnScaleLine) return;
+		
+		const pixelsPerUnit = drawnScaleLine.pixelLength / realWorldDistance;
+		const pixelsPerFoot = units === 'feet' ? pixelsPerUnit : 
+							 units === 'meters' ? pixelsPerUnit * 3.28084 :
+							 units === 'inches' ? pixelsPerUnit * 12 :
+							 pixelsPerUnit * 30.48;
+
+		updateScale({
+			pixelsPerFoot,
+			units,
+			referenceLine: {
+				x1: drawnScaleLine.x1,
+				y1: drawnScaleLine.y1,
+				x2: drawnScaleLine.x2,
+				y2: drawnScaleLine.y2,
+				realWorldDistance
+			}
+		});
+		
+		setActiveTool('select');
+		showScaleSetting = false;
+		setDrawnScaleLine(undefined);
+	}
+
+	function handleCancelScale() {
+		setActiveTool('select');
+		showScaleSetting = false;
+		setDrawnScaleLine(undefined);
+	}
+
+	function handleStartScale() {
+		onScaleSet();
+		showScaleSetting = true;
+	}
 </script>
 
-<aside class="w-80 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+<aside class="w-80 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
 	{#if showCustomBuilder}
 		<!-- Custom Camera Builder -->
 		<SidebarCustomCameraBuilder 
 			onClose={() => showCustomBuilder = false}
 			on:created={handleCustomCameraCreated}
 		/>
+	{:else if showScaleSetting && drawnScaleLine}
+		<!-- Scale Setting -->
+		<div class="p-4 h-full flex flex-col">
+			<div class="flex items-center justify-between mb-4">
+				<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+					Set Scale Reference
+				</h2>
+				<Button variant="ghost" size="sm" onclick={handleCancelScale}>
+					<X size={20} />
+				</Button>
+			</div>
+
+			<div class="space-y-4 flex-1">
+				<Card>
+					<CardContent class="p-4">
+						<div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+							<p class="text-sm text-blue-800 dark:text-blue-200">
+								You've drawn a line of <strong>{drawnScaleLine.pixelLength.toFixed(1)} pixels</strong>.
+								<br />Enter the real-world distance this line represents.
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader class="pb-2">
+						<CardTitle class="text-sm">Real-world distance</CardTitle>
+					</CardHeader>
+					<CardContent class="space-y-3">
+						<div class="flex space-x-2">
+							<Input
+								bind:value={realWorldDistance}
+								type="number"
+								min="0.1"
+								step="0.1"
+								placeholder="Enter distance"
+								class="flex-1"
+							/>
+							<select
+								bind:value={units}
+								class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-w-[80px]"
+							>
+								<option value="feet">Feet</option>
+								<option value="meters">Meters</option>
+								<option value="inches">Inches</option>
+								<option value="centimeters">cm</option>
+							</select>
+						</div>
+
+						<div class="flex space-x-2 pt-2">
+							<Button
+								onclick={handleCancelScale}
+								variant="outline"
+								class="flex-1"
+							>
+								Cancel
+							</Button>
+							<Button
+								onclick={handleSetScale}
+								disabled={!realWorldDistance || realWorldDistance <= 0}
+								class="flex-1"
+							>
+								<Check size={16} class="mr-1" />
+								Set Scale
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
 	{:else}
 		<!-- Main Sidebar Content -->
-		<!-- PDF Upload Section -->
-		<div class="p-4 border-b border-gray-200 dark:border-gray-700">
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Step 1: Floor Plan</h2>
-			<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Start by uploading your building's floor plan PDF</p>
-		
-		<button
-			onclick={() => fileInput?.click()}
-			class="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
-		>
-			<Upload size={20} class="text-gray-400" />
-			<span class="text-sm text-gray-600 dark:text-gray-300">Upload PDF Floor Plan</span>
-		</button>
-		
-		<input
-			bind:this={fileInput}
-			type="file"
-			accept=".pdf"
-			onchange={handleFileUpload}
-			class="hidden"
-		/>
+		<div class="flex-1 overflow-y-auto">
+			<!-- PDF Upload Section - Only show if no PDF loaded -->
+			{#if !$appState.currentProject?.pdfFile}
+				<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Upload Floor Plan</h2>
+					<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Start by uploading your building's floor plan PDF</p>
+				
+					<button
+						onclick={() => fileInput?.click()}
+						class="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+					>
+						<Upload size={20} class="text-gray-400" />
+						<span class="text-sm text-gray-600 dark:text-gray-300">Upload PDF Floor Plan</span>
+					</button>
+					
+					<input
+						bind:this={fileInput}
+						type="file"
+						accept=".pdf"
+						onchange={handleFileUpload}
+						class="hidden"
+					/>
+				</div>
+			{:else}
+				<!-- PDF Loaded - Show scale setting if not set -->
+				{#if !$appState.currentProject.scale.referenceLine}
+					<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Set Scale</h2>
+						<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Draw a line on something with a known measurement</p>
+						
+						<Button
+							onclick={handleStartScale}
+							class="w-full flex items-center justify-center space-x-2 text-sm"
+						>
+							<Ruler size={16} />
+							<span>Draw Scale Line</span>
+						</Button>
+					</div>
+				{/if}
+			{/if}
 
-		{#if $appState.currentProject?.pdfFile}
-			<div class="mt-2 text-xs text-green-600 dark:text-green-400">
-				✓ {$appState.currentProject.pdfFile.name}
-			</div>
-			
-			<div class="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-				<p class="text-xs text-blue-800 dark:text-blue-200 mb-2">
-					<strong>Step 2:</strong> Set the scale by drawing a line on something with a known measurement
-				</p>
-				<button
-					onclick={onScaleSet}
-					class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors text-sm"
-				>
-					<Ruler size={16} />
-					<span>Draw Scale Line</span>
-				</button>
-			</div>
-		{/if}
-	</div>
-
-	<!-- Camera Models Section -->
-	<div class="p-4 border-b border-gray-200 dark:border-gray-700">
-		<div class="flex items-center space-x-2 mb-2">
-			<Camera size={20} class="text-gray-600 dark:text-gray-300" />
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Step 3: Add Cameras</h2>
-		</div>
-		<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Drag cameras onto your floor plan</p>
+			<!-- Camera Models Section - Only show if PDF loaded and scale set -->
+			{#if $appState.currentProject?.pdfFile && $appState.currentProject.scale.referenceLine}
+				<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+					<div class="flex items-center space-x-2 mb-2">
+						<Camera size={20} class="text-gray-600 dark:text-gray-300" />
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add Cameras</h2>
+					</div>
+					<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Drag cameras onto your floor plan</p>
 
 		<input
 			bind:value={searchTerm}
@@ -191,24 +305,26 @@
 		</div>
 		
 		<!-- Custom Camera Builder Button -->
-		<div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-			<button
-				onclick={() => showCustomBuilder = true}
-				class="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-			>
-				<Plus size={16} />
-				<span>Create Custom Camera</span>
-			</button>
-		</div>
-	</div>
+					<div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+						<button
+							onclick={() => showCustomBuilder = true}
+							class="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+						>
+							<Plus size={16} />
+							<span>Create Custom Camera</span>
+						</button>
+					</div>
+				</div>
+			{/if}
 
-	<!-- Infrastructure Section -->
-	<div class="p-4 border-b border-gray-200 dark:border-gray-700">
-		<div class="flex items-center space-x-2 mb-2">
-			<Server size={20} class="text-gray-600 dark:text-gray-300" />
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Step 4: Add Infrastructure</h2>
-		</div>
-		<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Add network equipment and servers</p>
+			<!-- Infrastructure Section - Only show if PDF loaded and scale set -->
+			{#if $appState.currentProject?.pdfFile && $appState.currentProject.scale.referenceLine}
+				<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+					<div class="flex items-center space-x-2 mb-2">
+						<Server size={20} class="text-gray-600 dark:text-gray-300" />
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add Infrastructure</h2>
+					</div>
+					<p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Add network equipment and servers</p>
 
 		<div class="space-y-2">
 			{#each $infrastructureModels as model}
@@ -235,14 +351,17 @@
 							</div>
 						</div>
 					</div>
-				</div>
-			{/each}
+					</div>
+				{/each}
+			</div>
 		</div>
-	</div>
+	{/if}
 
-	<!-- Properties Panel -->
-	<div class="flex-1 p-4">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Selected Item</h2>
+		</div>
+
+		<!-- Properties Panel -->
+		<div class="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4 max-h-96 overflow-y-auto">
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Selected Item</h2>
 		
 		{#if selectedCamera}
 			{@const model = $cameraModels.find(m => m.id === selectedCamera.modelId)}
@@ -375,6 +494,6 @@
 				</div>
 			</div>
 		{/if}
-	</div>
+		</div>
 	{/if}
 </aside>

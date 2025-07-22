@@ -69,6 +69,7 @@ export interface Project {
 	scale: Scale;
 	transform: Transform;
 	compassRose?: CompassRose;
+	drawnScaleLine?: { x1: number; y1: number; x2: number; y2: number; pixelLength: number };
 	createdAt: Date;
 	updatedAt: Date;
 }

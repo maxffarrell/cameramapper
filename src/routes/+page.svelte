@@ -6,16 +6,13 @@
 	import Sidebar from '$lib/components/Layout/Sidebar.svelte';
 	import Toolbar from '$lib/components/Layout/Toolbar.svelte';
 	import PdfCanvas from '$lib/components/Canvas/PdfCanvas.svelte';
-	import ScaleDrawingModal from '$lib/components/Modals/ScaleDrawingModal.svelte';
-	import EditCameraModal from '$lib/components/Modals/EditCameraModal.svelte';
+		import EditCameraModal from '$lib/components/Modals/EditCameraModal.svelte';
 	import EditInfrastructureModal from '$lib/components/Modals/EditInfrastructureModal.svelte';
 	import type { Camera, InfrastructureComponent } from '$lib/types.js';
 	
 	let mounted = $state(false);
-	let showScaleModal = $state(false);
 	let showEditCameraModal = $state(false);
 	let showEditInfrastructureModal = $state(false);
-	let drawnScaleLine = $state<{ x1: number; y1: number; x2: number; y2: number; pixelLength: number } | undefined>();
 	let editingCamera = $state<Camera | undefined>();
 	let editingInfrastructure = $state<InfrastructureComponent | undefined>();
 
@@ -41,10 +38,6 @@
 		setActiveTool('scale');
 	}
 
-	function handleScaleLineDrawn(line: { x1: number; y1: number; x2: number; y2: number; pixelLength: number }) {
-		drawnScaleLine = line;
-		showScaleModal = true;
-	}
 
 	function handleEditCamera(camera: Camera) {
 		editingCamera = camera;
@@ -139,7 +132,6 @@
 				{#if mounted}
 					<PdfCanvas 
 						bind:this={pdfCanvas} 
-						onScaleLineDrawn={handleScaleLineDrawn}
 						onEditCamera={handleEditCamera}
 						onEditInfrastructure={handleEditInfrastructure}
 					/>
@@ -188,12 +180,6 @@
 			{/if}
 		</main>
 	</div>
-	
-	<ScaleDrawingModal 
-		isOpen={showScaleModal} 
-		onClose={() => { showScaleModal = false; drawnScaleLine = undefined; }}
-		scaleLine={drawnScaleLine}
-	/>
 	
 	<EditCameraModal 
 		isOpen={showEditCameraModal} 
