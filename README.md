@@ -22,7 +22,6 @@ Pre-configured camera models from major manufacturers:
 Each model includes:
 - FOV angle (10-180 degrees)
 - Detection range (5-200 feet)
-- Price information
 - Feature badges (Night Vision, Varifocal, PTZ, Audio)
 
 ### Infrastructure Components

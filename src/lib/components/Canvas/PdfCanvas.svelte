@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateTransform, setDrawnScaleLine } from '$lib/stores/app.js';
+import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateInfrastructure, updateTransform, setDrawnScaleLine } from '$lib/stores/app.js';
 	import { loadPdf, renderPdfPage, drawPdfOnCanvas, type PdfPage } from '$lib/utils/pdf.js';
 	import type { Camera, InfrastructureComponent } from '$lib/types.js';
 

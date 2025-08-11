@@ -26,12 +26,12 @@ export interface Camera {
 }
 
 export interface InfrastructureComponent {
-	id: string;
-	type: 'idf' | 'mdf' | 'poe-switch' | 'server' | 'recorder';
-	name: string;
-	x: number;
-	y: number;
-	emoji: string;
+        id: string;
+        type: 'idf' | 'mdf' | 'poe-switch' | 'server' | 'recorder';
+        name: string;
+        x: number;
+        y: number;
+        emoji: string;
 }
 
 export interface Scale {

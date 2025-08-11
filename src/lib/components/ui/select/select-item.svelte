@@ -3,14 +3,14 @@
 	import { Select as SelectPrimitive } from "bits-ui";
 	import { cn, type WithoutChild } from "$lib/utils.js";
 
-	let {
-		ref = $bindable(null),
-		class: className,
-		value,
-		label,
-		children: childrenProp,
-		...restProps
-	}: WithoutChild<SelectPrimitive.ItemProps> = $props();
+        let {
+                ref = $bindable(null),
+                class: className,
+                value,
+                label,
+                children: childrenProp,
+                ...restProps
+        }: WithoutChild<any> = $props();
 </script>
 
 <SelectPrimitive.Item
@@ -23,7 +23,7 @@
 	)}
 	{...restProps}
 >
-	{#snippet children({ selected, highlighted })}
+        {#snippet children({ selected, highlighted }: { selected: boolean; highlighted: boolean })}
 		<span class="absolute right-2 flex size-3.5 items-center justify-center">
 			{#if selected}
 				<CheckIcon class="size-4" />
