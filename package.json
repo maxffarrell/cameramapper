@@ -37,6 +37,7 @@
 	},
 	"dependencies": {
 		"lucide-svelte": "^0.525.0",
-		"pdfjs-dist": "^5.3.93"
-	}
+                "pdfjs-dist": "^5.3.93",
+                "bits-ui": "file:./bits-ui"
+        }
 }

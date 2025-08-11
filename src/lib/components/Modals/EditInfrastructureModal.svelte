@@ -9,23 +9,20 @@
 		component?: InfrastructureComponent;
 	}>();
 
-	let name = $state('');
-	let customPrice = $state<number>();
+        let name = $state('');
 
 	$effect(() => {
-		if (component) {
-			name = component.name;
-			customPrice = component.price;
-		}
-	});
+                if (component) {
+                        name = component.name;
+                }
+        });
 
-	function handleSave() {
-		if (!component) return;
-		
-		updateInfrastructure(component.id, {
-			name,
-			price: customPrice || component.price
-		});
+        function handleSave() {
+                if (!component) return;
+
+                updateInfrastructure(component.id, {
+                        name
+                });
 		
 		onClose();
 	}
@@ -91,27 +88,11 @@
 					/>
 				</div>
 
-				<!-- Price -->
-				<div>
-					<label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-						Price
-					</label>
-					<input
-						id="price"
-						bind:value={customPrice}
-						type="number"
-						min="0"
-						step="0.01"
-						placeholder="Enter price"
-						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-					/>
-				</div>
-
-				<!-- Position -->
-				<div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-					<h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">
-						Position
-					</h3>
+                                <!-- Position -->
+                                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                                                Position
+                                        </h3>
 					<p class="text-xs text-gray-600 dark:text-gray-400">
 						X: {component.x.toFixed(1)}px, Y: {component.y.toFixed(1)}px
 					</p>

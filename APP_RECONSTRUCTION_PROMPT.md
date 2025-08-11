@@ -6,8 +6,8 @@ You are to recreate a **Camera System Designer** web application that allows sec
 ## Core Application Purpose
 Professional security system design tool for:
 - Placing security cameras on architectural floor plans
-- Visualizing camera field-of-view (FOV) coverage areas  
-- Managing camera models with specifications (FOV angle, range, price, features)
+- Visualizing camera field-of-view (FOV) coverage areas
+- Managing camera models with specifications (FOV angle, range, features)
 - Adding network infrastructure components (servers, switches, distribution frames)
 - Calculating real-world coordinates using scale measurements
 - Exporting system designs to CSV for procurement and installation
@@ -64,7 +64,6 @@ Professional security system design tool for:
 - **Model Properties**: 
   - FOV angle (10-180 degrees)
   - Detection range (5-200 feet)
-  - Price information
   - Feature badges (Night Vision, Varifocal, PTZ, Audio)
 - **Custom Models**: Add new camera models with full specification control
 - **Visual Representation**: Emoji-based icons with hover tooltips
@@ -72,7 +71,6 @@ Professional security system design tool for:
 ### 4. Infrastructure Components
 - **Network Infrastructure**: IDF, MDF, PoE switches, recording servers
 - **Drag-and-Drop Placement**: Same interaction model as cameras
-- **Pricing Integration**: Cost calculation for complete system design
 - **Visual Distinction**: Color-coded icons and styling per component type
 
 ### 5. Interactive Tools & Controls
@@ -94,7 +92,7 @@ Professional security system design tool for:
 ### 7. Data Management
 - **Project Persistence**: JSON-based save/load functionality
 - **CSV Export**: Comprehensive equipment list with coordinates and specifications
-- **BOM Generation**: UTF-8 encoded export with pricing and feature details
+- **BOM Generation**: UTF-8 encoded export with feature details
 - **Local Storage**: Theme preference persistence
 
 ## User Interface Design System
@@ -183,7 +181,7 @@ Professional security system design tool for:
 ## Extension Points
 - **Plugin Architecture**: Modular camera model loading
 - **Export Formats**: Additional file format support
-- **Advanced Features**: Cable routing, coverage analysis, cost optimization
+- **Advanced Features**: Cable routing, coverage analysis
 - **Integration APIs**: CAD software export, procurement system integration
 
 ## Code Quality Standards

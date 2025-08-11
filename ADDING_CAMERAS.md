@@ -15,7 +15,6 @@ interface CameraModel {
   brand: string;        // Manufacturer name
   fovAngle: number;     // Field of view in degrees
   range: number;        // Maximum range in feet
-  price: number;        // Price in USD
   features: string[];   // Array of feature names
   type: 'dome' | 'bullet' | 'ptz' | 'fisheye';  // Camera type
   emoji: string;        // Emoji for display (fallback)
@@ -45,7 +44,6 @@ Open `/src/lib/stores/app.ts` and add your camera to the `cameraModels` array:
   brand: 'Brand Name',
   fovAngle: 90,        // Typical values: 60-180 degrees
   range: 100,          // In feet
-  price: 299,          // In USD
   features: ['Night Vision', 'Audio', 'Analytics'],
   type: 'bullet',      // dome, bullet, ptz, or fisheye
   emoji: '📹',         // Choose appropriate emoji
@@ -110,7 +108,6 @@ Use standardized feature names:
   brand: 'Uniview',
   fovAngle: 85,
   range: 130,
-  price: 189,
   features: ['Night Vision', 'Smart Detection', 'Audio'],
   type: 'bullet',
   emoji: '🎥',

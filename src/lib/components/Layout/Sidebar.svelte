@@ -260,16 +260,17 @@
 					<div class="flex items-start space-x-3">
 						<div class="flex-shrink-0 mt-1">
 							{#if model.imageUrl}
-								<img 
-									src={model.imageUrl} 
-									alt={model.name}
-									class="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-600"
-									onerror={(e) => {
-										e.currentTarget.style.display = 'none';
-										const fallback = e.currentTarget.nextElementSibling;
-										if (fallback) fallback.style.display = 'flex';
-									}}
-								/>
+                                                                <img
+                                                                        src={model.imageUrl}
+                                                                        alt={model.name}
+                                                                        class="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-600"
+                                                                        onerror={(e) => {
+                                                                                const img = e.currentTarget as HTMLImageElement;
+                                                                                img.style.display = 'none';
+                                                                                const fallback = img.nextElementSibling as HTMLElement | null;
+                                                                                if (fallback) fallback.style.display = 'flex';
+                                                                        }}
+                                                                />
 								<div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 flex items-center justify-center" style="display: none;">
 									<span class="text-lg">{model.emoji}</span>
 								</div>

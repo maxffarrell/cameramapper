@@ -11,16 +11,16 @@
 		created: CameraModel;
 	}>();
 
-	let customCamera = $state({
-		name: '',
-		brand: 'Custom',
-		fovAngle: 90,
-		range: 100,
-		features: [] as string[],
-		type: 'bullet' as const,
-		emoji: '📹',
-		color: '#6366f1'
-	});
+        let customCamera = $state<Omit<CameraModel, 'id'>>({
+                name: '',
+                brand: 'Custom',
+                fovAngle: 90,
+                range: 100,
+                features: [] as string[],
+                type: 'bullet',
+                emoji: '📹',
+                color: '#6366f1'
+        });
 
 	let newFeature = $state('');
 

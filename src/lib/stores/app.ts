@@ -128,11 +128,11 @@ const initializeCameraModels = () => {
 export const cameraModels = writable<CameraModel[]>(initializeCameraModels());
 
 export const infrastructureModels = writable<Omit<InfrastructureComponent, 'id' | 'x' | 'y'>[]>([
-	{ type: 'idf', name: 'IDF Cabinet', emoji: '🗄️' },
-	{ type: 'mdf', name: 'MDF Cabinet', emoji: '🏢' },
-	{ type: 'poe-switch', name: '24-Port PoE Switch', emoji: '🔌' },
-	{ type: 'server', name: 'Recording Server', emoji: '🖥️' },
-	{ type: 'recorder', name: 'NVR 32-Channel', emoji: '💾' }
+        { type: 'idf', name: 'IDF Cabinet', emoji: '🗄️' },
+        { type: 'mdf', name: 'MDF Cabinet', emoji: '🏢' },
+        { type: 'poe-switch', name: '24-Port PoE Switch', emoji: '🔌' },
+        { type: 'server', name: 'Recording Server', emoji: '🖥️' },
+        { type: 'recorder', name: 'NVR 32-Channel', emoji: '💾' }
 ]);
 
 export function setActiveTool(tool: Tool) {
