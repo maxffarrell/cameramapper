@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateTransform, setDrawnScaleLine } from '$lib/stores/app.js';
+	import { appState, setPdfFile, setLoading, addCamera, addInfrastructure, selectCamera, selectInfrastructure, cameraModels, updateCamera, updateInfrastructure, updateTransform, setDrawnScaleLine } from '$lib/stores/app.js';
 	import { loadPdf, renderPdfPage, drawPdfOnCanvas, type PdfPage } from '$lib/utils/pdf.js';
 	import type { Camera, InfrastructureComponent } from '$lib/types.js';
 
@@ -643,8 +643,8 @@
 					{@const coneSize = camera.coneSize || 0.3}
 					{@const startAngle = camera.rotation - fov / 2}
 					{@const endAngle = camera.rotation + fov / 2}
-					{@const x = camera.x * transform.zoom + transform.panX * transform.zoom}
-					{@const y = camera.y * transform.zoom + transform.panY * transform.zoom}
+					{@const x = (camera.x + transform.panX) * transform.zoom}
+					{@const y = (camera.y + transform.panY) * transform.zoom}
 					{@const scaledRange = range * transform.zoom * coneSize}
 					
 					<path
